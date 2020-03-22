@@ -1,0 +1,5 @@
+name: ElectroVanilla
+version: ${project.version}
+main: cz.hydracore.electrovanilla.ElectroVanilla
+api-version: 1.13
+authors: [Sam]
