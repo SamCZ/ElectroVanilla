@@ -1,23 +1,28 @@
 package cz.hydracore.electrovanilla;
 
 import com.mojang.datafixers.util.Pair;
+import cz.hydracore.electrovanilla.item.EItem;
+import cz.hydracore.electrovanilla.item.ItemManager;
 import cz.hydracore.electrovanilla.machine.Machine;
 import cz.hydracore.electrovanilla.machine.type.IronFurnace;
 import cz.hydracore.electrovanilla.machine.type.Pulverizer;
-import cz.hydracore.utils.Nbt;
-import cz.hydracore.utils.RunnableHelper;
+import cz.hydracore.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.EulerAngle;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,11 +32,20 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
 
     private static ElectroVanilla Instance;
 
+    private ItemManager itemManager;
+
     private List<Pair<Location, Machine>> machines = new ArrayList<>();
+
+    private List<ArmorStand> armorStandList = new ArrayList<>();
 
     @Override
     public void onEnable() {
         Instance = this;
+
+        itemManager = new ItemManager();
+
+        itemManager.register(new EItem(0, new ItemBuilder(Material.COCOA_BEANS).setName("Iron dust").build()));
+        itemManager.register(new EItem(4, new ItemBuilder(Material.BLAZE_POWDER).setName("Gold dust").build()));
 
         /*{
             ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "wire"), Items.WIRE);
@@ -129,6 +143,13 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
             return;
         }
 
+        event.setCancelled(true);
+
+        this.armorStandList.add(ArmorStandHelper.spawnWithHead(block.getWorld(), block.getLocation().clone().add(0, 0.5 - 0.25 , 0), 0, 180, PlayerHead.Clock.build()));
+        this.armorStandList.add(ArmorStandHelper.spawnWithHead(block.getWorld(), block.getLocation().clone().add(0, -0.25, 0), 0, 0, new ItemStack(Material.BLAST_FURNACE)));
+
+        if(true) return;
+
         Machine machine = createMachine(itemId);
 
         if(machine == null) {
@@ -136,6 +157,24 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
         }
 
         this.machines.add(new Pair<>(block.getLocation(), machine));
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        Player player = event.getPlayer();
+
+        player.sendMessage(event.getRightClicked() instanceof ArmorStand ? "ar" : "no");
+
+        event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event) {
+        Player player = event.getPlayer();
+
+        player.sendMessage(event.getRightClicked() instanceof ArmorStand ? "ar" : "no");
+
+        event.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -173,7 +212,13 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        
+        for(ArmorStand armorStand : armorStandList) {
+            armorStand.remove();
+        }
+    }
+
+    public ItemManager getItemManager() {
+        return itemManager;
     }
 
     public static ElectroVanilla getInstance() {

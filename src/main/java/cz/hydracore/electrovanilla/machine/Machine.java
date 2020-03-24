@@ -6,9 +6,8 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class Machine implements InventoryHolder, BatterySource {
+public abstract class Machine implements InventoryHolder {
 
-    private BatterySource batterySource;
     private Inventory inventory;
     private int battery;
 
@@ -28,10 +27,6 @@ public abstract class Machine implements InventoryHolder, BatterySource {
 
     public void setBattery(int battery) {
         this.battery = Math.max(0, Math.min(100, battery));
-    }
-
-    public void setBatterySource(BatterySource batterySource) {
-        this.batterySource = batterySource;
     }
 
     public void recharge(int amount) {
