@@ -1,11 +1,10 @@
 package cz.hydracore.electrovanilla;
 
 import com.mojang.datafixers.util.Pair;
+import cz.hydracore.electrovanilla.conduit.WireComponent;
+import cz.hydracore.electrovanilla.electric.IElectricComponent;
 import cz.hydracore.electrovanilla.item.EItem;
 import cz.hydracore.electrovanilla.item.ItemManager;
-import cz.hydracore.electrovanilla.machine.Machine;
-import cz.hydracore.electrovanilla.machine.type.IronFurnace;
-import cz.hydracore.electrovanilla.machine.type.Pulverizer;
 import cz.hydracore.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -18,14 +17,11 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.EulerAngle;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public final class ElectroVanilla extends JavaPlugin implements Listener {
@@ -34,9 +30,7 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
 
     private ItemManager itemManager;
 
-    private List<Pair<Location, Machine>> machines = new ArrayList<>();
-
-    private List<ArmorStand> armorStandList = new ArrayList<>();
+    private List<Pair<Location, IElectricComponent>> electricComponenetsInstances = new ArrayList<>();
 
     @Override
     public void onEnable() {
@@ -47,27 +41,40 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
         itemManager.register(new EItem(0, new ItemBuilder(Material.COCOA_BEANS).setName("Iron dust").build()));
         itemManager.register(new EItem(4, new ItemBuilder(Material.BLAZE_POWDER).setName("Gold dust").build()));
 
-        /*{
-            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "wire"), Items.WIRE);
-            recipe.shape("   ", "WWW", "   ");
+        {
+            ItemStack itemStack = new ItemBuilder(Material.BLACK_WOOL).setNbt_Int("ITEM_ID", 1).setName("Wire").build();
+
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "wire"), itemStack);
+            recipe.shape("   ", "WRW", "   ");
             recipe.setIngredient('W', Material.IRON_INGOT);
+            recipe.setIngredient('R', Material.REDSTONE);
             Bukkit.addRecipe(recipe);
-        }*/
+
+            itemManager.register(new EItem(1, itemStack, (electroVanilla, eItem) -> new WireComponent(eItem), recipe));
+        }
 
         {
-            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "pulverizer"), Items.PULVERIZER);
+            ItemStack itemStack = new ItemBuilder(Material.SMITHING_TABLE).setName("Pulverizer").build();
+
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "pulverizer"), itemStack);
             recipe.shape(" B ", " F ", " B ");
             recipe.setIngredient('B', Material.IRON_BLOCK);
             recipe.setIngredient('F', Material.FURNACE);
             Bukkit.addRecipe(recipe);
+
+            itemManager.register(new EItem(2, itemStack, (electroVanilla, eItem) -> null, recipe));
         }
 
         {
-            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "iron_furnace"), Items.IRON_FURNACE);
+            ItemStack itemStack = new ItemBuilder(Material.FLETCHING_TABLE).setName("Iron furnace").build();
+
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "iron_furnace"), itemStack);
             recipe.shape(" B ", " F ", " F ");
             recipe.setIngredient('B', Material.IRON_BLOCK);
             recipe.setIngredient('F', Material.FURNACE);
             Bukkit.addRecipe(recipe);
+
+            itemManager.register(new EItem(3, itemStack, (electroVanilla, eItem) -> null, recipe));
         }
 
         getServer().getPluginManager().registerEvents(this, this);
@@ -75,26 +82,15 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
         RunnableHelper.runTaskTimer(this::updateMachines, 10);
     }
 
-    private Machine createMachine(int id) {
-        switch (id) {
-            case 2:
-                return new Pulverizer();
-            case 3:
-                return new IronFurnace();
-            default:
-                return null;
-        }
-    }
-
     private void updateMachines() {
-        for(Pair<Location, Machine> machinePair : this.machines) {
+        /*for(Pair<Location, Machine> machinePair : this.machines) {
             machinePair.getSecond().update();
-        }
+        }*/
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(event.getHand() != EquipmentSlot.HAND)
+        /*if(event.getHand() != EquipmentSlot.HAND)
             return;
 
         switch (event.getAction()) {
@@ -129,7 +125,7 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
 
                 break;
             }
-        }
+        }*/
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -145,18 +141,29 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
 
         event.setCancelled(true);
 
-        this.armorStandList.add(ArmorStandHelper.spawnWithHead(block.getWorld(), block.getLocation().clone().add(0, 0.5 - 0.25 , 0), 0, 180, PlayerHead.Clock.build()));
+        System.out.println(itemId);
+
+        EItem eItem = itemManager.getItemById(itemId);
+
+        IElectricComponent electricComponent = eItem.getElectricComponentInstanceCreator().createNewInstance(this, eItem);
+        electricComponent.onSpawned(block.getWorld(), block.getLocation());
+
+        electricComponenetsInstances.add(new Pair<>(block.getLocation(), electricComponent));
+
+        /*this.armorStandList.add(ArmorStandHelper.spawnWithHead(block.getWorld(), block.getLocation().clone().add(0, 0.5 - 0.25 , 0), 0, 180, PlayerHead.Clock.build()));
         this.armorStandList.add(ArmorStandHelper.spawnWithHead(block.getWorld(), block.getLocation().clone().add(0, -0.25, 0), 0, 0, new ItemStack(Material.BLAST_FURNACE)));
 
         if(true) return;
 
-        Machine machine = createMachine(itemId);
+        EItem eItem = itemManager.getItemById(itemId);
+
+        Machine machine = eItem.getElectricComponentInstanceCreator().createNewInstance(this, eItem);
 
         if(machine == null) {
             return;
         }
 
-        this.machines.add(new Pair<>(block.getLocation(), machine));
+        this.machines.add(new Pair<>(block.getLocation(), machine));*/
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -182,7 +189,7 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
         Block block = event.getBlock();
         Location location = block.getLocation();
 
-        Iterator<Pair<Location, Machine>> iterator = this.machines.iterator();
+        /*Iterator<Pair<Location, Machine>> iterator = this.machines.iterator();
 
         while (iterator.hasNext()) {
             Pair<Location, Machine> pair = iterator.next();
@@ -203,7 +210,7 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
                 }
                 break;
             }
-        }
+        }*/
     }
 
     public static boolean equalsBlockLocation(Location loc1, Location loc2) {
@@ -212,8 +219,8 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        for(ArmorStand armorStand : armorStandList) {
-            armorStand.remove();
+        for(Pair<Location, IElectricComponent> pair : this.electricComponenetsInstances) {
+            pair.getSecond().onDestroyed(pair.getFirst().getWorld(), pair.getFirst(), false);
         }
     }
 

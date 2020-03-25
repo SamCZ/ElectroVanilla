@@ -16,7 +16,6 @@ public class EItem {
 
     public EItem(int id, @NotNull ItemStack itemStack, @Nullable IElectricComponentInstanceCreator electricComponentInstanceCreator, @Nullable Recipe recipe) {
         this.id = id;
-        this.itemStack = Nbt.setNbt_Int(itemStack, "ITEM_ID", id);
         this.electricComponentInstanceCreator = electricComponentInstanceCreator;
         this.recipe = recipe;
     }

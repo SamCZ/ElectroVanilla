@@ -10,6 +10,8 @@ public interface IElectricComponent {
 
     void onSpawned(@NotNull World world, @NotNull Location location);
 
-    void onDestroyed(@NotNull World world, @NotNull Location location);
+    void onDestroyed(@NotNull World world, @NotNull Location location, boolean isDrop);
+
+    //void onUpdate();
 
 }

@@ -1,17 +1,20 @@
 package cz.hydracore.electrovanilla.model;
 
 import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.ArmorStand;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractModel implements IModel {
 
-    public static final int BASE_MODEL_ATTR_ID = 0;
+    public static final int BASE_MODEL_ATTR_ID = BlockFace.SELF.ordinal();
 
-    private Map<Integer, ArmorStand> modelMap = new HashMap<>();
+    private Map<Integer, List<ArmorStand>> modelMap = new HashMap<>();
     private Location baseLocation;
 
     protected AbstractModel() {
@@ -26,9 +29,7 @@ public abstract class AbstractModel implements IModel {
 
     @Override
     public void destroy() {
-        for(ArmorStand armorStand : this.modelMap.values()) {
-            armorStand.remove();
-        }
+        this.modelMap.values().forEach(armorStands -> armorStands.forEach(ArmorStand::remove));
 
         this.modelMap.clear();
     }
@@ -40,12 +41,16 @@ public abstract class AbstractModel implements IModel {
         boolean spawned = this.modelMap.containsKey(attributeId);
 
         if(spawned && !flag) {
-            this.modelMap.get(attributeId).remove();
+            this.modelMap.get(attributeId).forEach(ArmorStand::remove);
             this.modelMap.remove(attributeId);
         } else if(!spawned && flag) {
-            this.modelMap.put(attributeId, createModel(attributeId, this.baseLocation));
+            List<ArmorStand> list = new ArrayList<>();
+            createModel(list, attributeId, this.baseLocation.clone());
+            if(list.size() > 0) {
+                this.modelMap.put(attributeId, list);
+            }
         }
     }
 
-    protected abstract ArmorStand createModel(int attributeId, @NotNull Location location);
+    protected abstract void createModel(List<ArmorStand> models, int attributeId, @NotNull Location location);
 }

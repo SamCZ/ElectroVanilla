@@ -1,17 +1,16 @@
-package cz.hydracore.electrovanilla.machine;
+package cz.hydracore.electrovanilla.conduit;
 
 import cz.hydracore.electrovanilla.electric.ElectricModelComponent;
 import cz.hydracore.electrovanilla.item.EItem;
 import cz.hydracore.electrovanilla.model.AbstractModel;
+import cz.hydracore.electrovanilla.model.type.WireModel;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class Machine extends ElectricModelComponent implements InventoryHolder {
+public class WireComponent extends ElectricModelComponent {
 
-    public Machine(EItem eItem) {
+    public WireComponent(EItem eItem) {
         super(eItem);
     }
 
@@ -22,16 +21,11 @@ public abstract class Machine extends ElectricModelComponent implements Inventor
 
     @Override
     public Class<? extends AbstractModel> getModelClass() {
-        return null;
+        return WireModel.class;
     }
 
     @Override
     public void onTick() {
 
-    }
-
-    @Override
-    public @NotNull Inventory getInventory() {
-        return null;
     }
 }
