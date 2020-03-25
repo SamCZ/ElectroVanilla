@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Random;
 
 public class WireModel extends AbstractModel {
 
@@ -21,6 +22,10 @@ public class WireModel extends AbstractModel {
 
         BlockFace face = BlockFace.values()[attributeId];
 
-        models.add(ArmorStandHelper.spawnWithHead(location.add(face.getModX() * 0.3, face.getModY() * 0.3, face.getModZ() * 0.3), true, 0, 0, new ItemStack(Material.IRON_BLOCK)));
+        Random random = new Random();
+
+        float rr = random.nextInt(10) / 900.0f;
+
+        models.add(ArmorStandHelper.spawnWithHead(location.add(face.getModX() * 0.3 + rr, face.getModY() * 0.3 + rr, face.getModZ() * 0.3 + rr), true, 0, 0, new ItemStack(Material.IRON_BLOCK)));
     }
 }

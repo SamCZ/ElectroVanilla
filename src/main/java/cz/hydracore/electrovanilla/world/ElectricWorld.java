@@ -59,6 +59,17 @@ public class ElectricWorld {
         ElectricBlockStorage storage = electricComponentsInstances.get(blockLocation);
         storage.getElectricModelComponent().onDestroyed(storage.getLocation().getWorld(), storage.getLocation(), true);
         electricComponentsInstances.remove(blockLocation);
+
+        for (int i = 0; i < 6; i++) {
+            BlockFace face = BlockFace.values()[i];
+
+            ElectricBlockStorage relativeStorage = storage.getRelative(face);
+
+            if(relativeStorage == null) continue;
+
+            relativeStorage.getElectricModelComponent().update(relativeStorage);
+        }
+
         return true;
     }
 

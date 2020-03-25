@@ -1,7 +1,6 @@
 package cz.hydracore.electrovanilla.item;
 
 import cz.hydracore.electrovanilla.machine.IElectricComponentInstanceCreator;
-import cz.hydracore.utils.Nbt;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.jetbrains.annotations.NotNull;
