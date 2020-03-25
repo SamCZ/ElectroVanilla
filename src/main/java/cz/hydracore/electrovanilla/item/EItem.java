@@ -16,6 +16,7 @@ public class EItem {
 
     public EItem(int id, @NotNull ItemStack itemStack, @Nullable IElectricComponentInstanceCreator electricComponentInstanceCreator, @Nullable Recipe recipe) {
         this.id = id;
+        this.itemStack = itemStack;
         this.electricComponentInstanceCreator = electricComponentInstanceCreator;
         this.recipe = recipe;
     }

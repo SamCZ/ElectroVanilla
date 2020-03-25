@@ -3,7 +3,9 @@ package cz.hydracore.electrovanilla.electric;
 import cz.hydracore.electrovanilla.ElectroVanilla;
 import cz.hydracore.electrovanilla.item.EItem;
 import cz.hydracore.electrovanilla.model.AbstractModel;
+import cz.hydracore.electrovanilla.world.ElectricBlockStorage;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.jetbrains.annotations.NotNull;
@@ -40,23 +42,6 @@ public abstract class ElectricModelComponent implements IElectricComponent {
         }
 
         this.model.spawn(location);
-
-        if(i < 3) {
-            this.model.setAttribute(BlockFace.EAST.ordinal(), true);
-            this.model.setAttribute(BlockFace.WEST.ordinal(), true);
-        }
-
-        if(i == 3) {
-            this.model.setAttribute(BlockFace.EAST.ordinal(), true);
-            this.model.setAttribute(BlockFace.NORTH.ordinal(), true);
-        }
-
-        if(i > 3) {
-            this.model.setAttribute(BlockFace.SOUTH.ordinal(), true);
-            this.model.setAttribute(BlockFace.NORTH.ordinal(), true);
-        }
-
-        i++;
     }
 
     @Override
@@ -71,7 +56,25 @@ public abstract class ElectricModelComponent implements IElectricComponent {
         this.dropItemsOnDestroy(world, location);
     }
 
+    public void update(ElectricBlockStorage storage) {
+        for (int i = 0; i < 6; i++) {
+            BlockFace face = BlockFace.values()[i];
+
+            ElectricBlockStorage relativeStorage = storage.getRelative(face);
+
+            this.model.setAttribute(i, relativeStorage != null || storage.getLocation().getBlock().getRelative(face).getType() == Material.FURNACE);
+        }
+    }
+
     public abstract void dropItemsOnDestroy(@NotNull World world, @NotNull Location location);
 
     public abstract Class<? extends AbstractModel> getModelClass();
+
+    public AbstractModel getModel() {
+        return model;
+    }
+
+    public EItem geteItem() {
+        return eItem;
+    }
 }
