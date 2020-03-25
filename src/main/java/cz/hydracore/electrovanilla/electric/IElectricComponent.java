@@ -8,6 +8,8 @@ public interface IElectricComponent {
 
     void onTick();
 
+    void onSpawned(@NotNull World world, @NotNull Location location);
+
     void onDestroyed(@NotNull World world, @NotNull Location location);
 
 }
