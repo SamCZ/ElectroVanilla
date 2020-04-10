@@ -1,6 +1,8 @@
 package cz.hydracore.electrovanilla.electric;
 
 import cz.hydracore.electrovanilla.ElectroVanilla;
+import cz.hydracore.electrovanilla.core.Input;
+import cz.hydracore.electrovanilla.core.Output;
 import cz.hydracore.electrovanilla.item.EItem;
 import cz.hydracore.electrovanilla.model.AbstractModel;
 import cz.hydracore.electrovanilla.world.ElectricBlockStorage;
@@ -8,6 +10,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -22,7 +25,9 @@ public abstract class ElectricModelComponent implements IElectricComponent {
         this.eItem = eItem;
     }
 
-    private static int i;
+    public void openGUI(Player player) {
+        //TODO: GUI
+    }
 
     @Override
     public void onSpawned(@NotNull World world, @NotNull Location location) {
@@ -69,6 +74,14 @@ public abstract class ElectricModelComponent implements IElectricComponent {
     public abstract void dropItemsOnDestroy(@NotNull World world, @NotNull Location location);
 
     public abstract Class<? extends AbstractModel> getModelClass();
+
+    public Output getOutput() {
+        return null;
+    }
+
+    public Input getInput() {
+        return null;
+    }
 
     public AbstractModel getModel() {
         return model;

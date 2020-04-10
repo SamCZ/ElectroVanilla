@@ -5,19 +5,20 @@ import cz.hydracore.electrovanilla.conduit.WireComponent;
 import cz.hydracore.electrovanilla.electric.ElectricModelComponent;
 import cz.hydracore.electrovanilla.item.EItem;
 import cz.hydracore.electrovanilla.item.ItemManager;
+import cz.hydracore.electrovanilla.listeners.PoopEvents;
 import cz.hydracore.electrovanilla.world.ElectricWorld;
 import cz.hydracore.utils.*;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -52,6 +53,19 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
         }
 
         {
+            ItemStack itemStack = new ItemBuilder(Material.CHEST_MINECART).setNbt_Int("ITEM_ID", 10).setName("Ender pouch").build();
+
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "ender_pouch"), itemStack);
+            recipe.shape("PPP", "RER", "PPP");
+            recipe.setIngredient('P', Material.ENDER_PEARL);
+            recipe.setIngredient('R', Material.REDSTONE);
+            recipe.setIngredient('E', Material.ENDER_CHEST);
+            Bukkit.addRecipe(recipe);
+
+            itemManager.register(new EItem(10, itemStack, null, recipe));
+        }
+
+        {
             ItemStack itemStack = new ItemBuilder(Material.SMITHING_TABLE).setName("Pulverizer").build();
 
             ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "pulverizer"), itemStack);
@@ -75,59 +89,31 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
             itemManager.register(new EItem(3, itemStack, null, recipe));
         }
 
+        {
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "membrane"), new ItemStack(Material.PHANTOM_MEMBRANE, 3));
+            recipe.shape("EEE", "FPF", "EEE");
+            recipe.setIngredient('E', Material.END_STONE);
+            recipe.setIngredient('F', Material.FEATHER);
+            recipe.setIngredient('P', Material.ENDER_PEARL);
+            Bukkit.addRecipe(recipe);
+        }
+
+        {
+            ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "wool_to_string"), new ItemStack(Material.STRING, 4));
+            recipe.shape("W");
+            recipe.setIngredient('W', Material.WHITE_WOOL);
+            Bukkit.addRecipe(recipe);
+        }
+
         getServer().getPluginManager().registerEvents(this, this);
+        //getServer().getPluginManager().registerEvents(new PoopEvents(), this);
 
         RunnableHelper.runTaskTimer(this::updateMachines, 10);
     }
 
-    private void updateMachines() {
-        /*for(Pair<Location, Machine> machinePair : this.machines) {
-            machinePair.getSecond().update();
-        }*/
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        /*if(event.getHand() != EquipmentSlot.HAND)
-            return;
-
-        switch (event.getAction()) {
-            case LEFT_CLICK_AIR:
-            case PHYSICAL:
-            case RIGHT_CLICK_AIR:
-            case LEFT_CLICK_BLOCK:
-                return;
-        }
-
-        Player player = event.getPlayer();
-
-        Block block = event.getClickedBlock();
-
-        if(block == null) {
-            return;
-        }
-        Location location = block.getLocation();
-
-        Iterator<Pair<Location, Machine>> iterator = this.machines.iterator();
-
-        while (iterator.hasNext()) {
-            Pair<Location, Machine> pair = iterator.next();
-            Location mLocation = pair.getFirst();
-
-            Machine machine = pair.getSecond();
-
-            if(equalsBlockLocation(location, mLocation)) {
-                event.setCancelled(true);
-
-                player.openInventory(machine.getInventory());
-
-                break;
-            }
-        }*/
-    }
-
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
+        Player player = event.getPlayer();
         Block block = event.getBlock();
         ItemStack itemStack = event.getItemInHand();
 
@@ -137,27 +123,69 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
             return;
         }
 
-        event.setCancelled(true);
 
         EItem eItem = itemManager.getItemById(itemId);
 
-        this.electricWorld.spawn(eItem, block.getLocation());
+        if(eItem.getId() == 10) {
+            event.setCancelled(true);
+            player.openInventory(player.getEnderChest());
+            return;
+        }
+
+        if(this.electricWorld.spawn(eItem, block.getLocation()) != null) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+    public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 
-        player.sendMessage(event.getRightClicked() instanceof ArmorStand ? "ar" : "no");
+        if(event.getItem() == null)
+            return;
 
-        //event.setCancelled(true);
+        int itemId = Nbt.getNbt_Int(event.getItem(), "ITEM_ID", -1);
+
+        if(itemId == -1) {
+            return;
+        }
+
+
+        EItem eItem = itemManager.getItemById(itemId);
+
+        if(eItem.getId() == 10) {
+            event.setCancelled(true);
+            player.openInventory(player.getEnderChest());
+            return;
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerAnimation(PlayerAnimationEvent event) {
+        Player player = event.getPlayer();
+        ItemStack itemStack = event.getPlayer().getInventory().getItemInMainHand();
+
+        if(itemStack == null)
+            return;
+
+        int itemId = Nbt.getNbt_Int(itemStack, "ITEM_ID", -1);
+
+        if(itemId == -1) {
+            return;
+        }
+
+
+        EItem eItem = itemManager.getItemById(itemId);
+
+        if(eItem.getId() == 10) {
+            player.openInventory(player.getEnderChest());
+            return;
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteractAtEntity(PlayerInteractAtEntityEvent event) {
         Player player = event.getPlayer();
-
-        player.sendMessage(event.getRightClicked() instanceof ArmorStand ? "ar" : "no");
 
         if(event.getRightClicked() instanceof ArmorStand) {
             this.electricWorld.destroy(event.getRightClicked().getLocation().getBlock().getLocation());
@@ -172,6 +200,19 @@ public final class ElectroVanilla extends JavaPlugin implements Listener {
         Location location = block.getLocation();
 
         electricWorld.destroy(location);
+    }
+
+    @EventHandler
+    public void onExplodeEvent(EntityExplodeEvent e) {
+        if(e.getEntity() instanceof Creeper) {
+            e.setCancelled(true);
+        }
+    }
+
+    private void updateMachines() {
+        /*for(Pair<Location, Machine> machinePair : this.machines) {
+            machinePair.getSecond().update();
+        }*/
     }
 
     public static boolean equalsBlockLocation(Location loc1, Location loc2) {

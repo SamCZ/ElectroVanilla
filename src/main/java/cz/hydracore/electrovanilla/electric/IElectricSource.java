@@ -1,6 +1,8 @@
 package cz.hydracore.electrovanilla.electric;
 
-public interface IElectricSource {
+import cz.hydracore.electrovanilla.core.Output;
+
+public interface IElectricSource extends Output {
 
     boolean hasCharge();
 
